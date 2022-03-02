@@ -1,43 +1,86 @@
 const { response, request } = require('express')
+const Usuario = require('../models/usuario')
+const bcryptjs = require('bcryptjs')
 
 
-const usuariosGet = (req = request, res = response) => {
-    const query = req.query
+const usuariosGet = async (req = request, res = response) => {
+    const { limite = 5, desde = 0 } = req.query
+
+    const [total, usuarios] = await Promise.all([
+        Usuario.countDocuments({ estado: true }),
+        Usuario.find({ estado: true })
+            .skip(desde)
+            .limit(limite)
+    ])
 
     res.json({
-        msg: 'get API - Controlador',
-        query
+        total,
+        usuarios
     })
 }
 
-const usuariosPost = (req = request, res=response) => {
-    const {nombre, edad} = req.body;
+const usuariosPost = async (req = request, res = response) => {
 
-    res.json({
-        msg: 'post API - Controlador',
+    const { nombre, correo, password, rol } = req.body;
+    const usuario = new Usuario({
         nombre,
-        edad
+        correo,
+        password,
+        rol
     })
+
+    // Verificar si el usuario existe
+
+    /* Esta verificacion se cambia a las validaciones de Base datos
+    const existeEmail = await Usuario.findOne({correo})
+    if (existeEmail){
+        return res.status(400).json({
+            msg: 'Ese correo ya esta registrado.'
+        })
+    }*/
+
+    // Encriptar la sontraseña
+    const salt = bcryptjs.genSaltSync()
+    usuario.password = bcryptjs.hashSync(password, salt)
+
+
+
+    await usuario.save()
+
+    res.json(usuario)
 }
 
-const usuariosPut = (req = request, res=response) => {
+const usuariosPut = async (req = request, res = response) => {
 
-    const {id} = req.params
+    const { id } = req.params
+    const { _id, password, google, correo, ...resto } = req.body
 
-    res.json({
-        msg: 'put API - Controlador',
-        id
-    })
+    // Validar contra base de datos
+    if (password) {
+        const salt = bcryptjs.genSaltSync()
+        resto.password = bcryptjs.hashSync(password, salt)
+    }
+
+    const usuario = await Usuario.findByIdAndUpdate(id, resto)
+
+    res.json(usuario)
 }
 
 
-const usuariosDelete = (req, res=response) => {
-    res.json({msg: 'delete API - Controlador'})
+const usuariosDelete = async (req = require , res = response) => {
+    const { id } = req.params
+
+    //Fisicamente borrado
+    //const usuario = await Usuario.findByIdAndDelete(id)
+
+    const usuario = await Usuario.findByIdAndUpdate(id, {estado: false})
+
+    res.json(usuario)
 }
 
 
-const usuariosPatch = (req, res=response) => {
-    res.json({msg: 'patch API - Controlador'})
+const usuariosPatch = (req, res = response) => {
+    res.json({ msg: 'patch API - Controlador' })
 }
 
 
