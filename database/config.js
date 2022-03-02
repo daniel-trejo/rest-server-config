@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
 const dbConn = async () => {
-
+    // Just for ...
     try {
         await mongoose.connect( process.env.MONGODB_CNN, {
             useNewUrlParser: true,
