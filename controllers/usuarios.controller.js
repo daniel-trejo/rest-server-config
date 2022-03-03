@@ -70,12 +70,15 @@ const usuariosPut = async (req = request, res = response) => {
 const usuariosDelete = async (req = require , res = response) => {
     const { id } = req.params
 
-    //Fisicamente borrado
-    //const usuario = await Usuario.findByIdAndDelete(id)
-
     const usuario = await Usuario.findByIdAndUpdate(id, {estado: false})
+    const usuarioAutenticado = req.usuario
 
-    res.json(usuario)
+
+
+
+    res.json({
+        usuario
+    })
 }
 
 
